@@ -102,66 +102,68 @@ class _WeatherHomeState extends State<WeatherHome> {
   Future<void> _showSearchDialog() async {
     String? result = await showDialog<String>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Search City'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter city name',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _filterCities(value);
-                  });
-                },
-              ),
-              const SizedBox(height: 8),
-              Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.3,
-                ),
-                child: filteredCities.isEmpty
-                    ? const Center(
-                        child: Text('No cities found'),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: filteredCities.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            leading: const Icon(Icons.location_city),
-                            title: Text(filteredCities[index]),
-                            onTap: () {
-                              Navigator.pop(context, filteredCities[index]);
-                            },
-                          );
-                        },
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Search City'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter city name',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        setState(() {
+                          _filterCities(value);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    if (filteredCities.isNotEmpty)
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: filteredCities.length > 5 ? 5 : filteredCities.length,
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.location_city),
+                              title: Text(filteredCities[index]),
+                              onTap: () {
+                                Navigator.pop(context, filteredCities[index]);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (_searchController.text.isNotEmpty) {
-                  Navigator.pop(context, _searchController.text);
-                }
-              },
-              child: const Text('Search'),
-            ),
-          ],
-        ),
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (_searchController.text.isNotEmpty) {
+                      Navigator.pop(context, _searchController.text);
+                    }
+                  },
+                  child: const Text('Search'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
 
     if (result != null && result.isNotEmpty) {
@@ -194,27 +196,24 @@ class _WeatherHomeState extends State<WeatherHome> {
         centerTitle: true,
         actions: [
           IconButton(
-            iconSize: 32,
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => SettingsPage(
+                    onThemeToggle: widget.onThemeToggle,
                     useCelsius: useCelsius,
-                    showAlerts: showAlerts,
-                    onTemperatureUnitChanged: (value) {
+                    onTemperatureUnitChanged: (bool value) {
                       setState(() {
                         useCelsius = value;
                       });
                     },
-                    onAlertsToggled: (value) {
+                    showAlerts: showAlerts,
+                    onAlertsToggled: (bool value) {
                       setState(() {
                         showAlerts = value;
                       });
-                    },
-                    onThemeToggle: () {
-                      widget.onThemeToggle();
                     },
                   ),
                 ),
