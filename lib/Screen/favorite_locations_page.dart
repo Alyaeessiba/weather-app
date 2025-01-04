@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class FavoriteLocationsPage extends StatelessWidget {
+class FavoriteLocationsPage extends StatefulWidget {
   final List<String> favoriteLocations;
   final String currentCity;
   final Function(String) onLocationSelected;
@@ -13,6 +13,19 @@ class FavoriteLocationsPage extends StatelessWidget {
     required this.onLocationSelected,
     required this.onLocationRemoved,
   });
+
+  @override
+  State<FavoriteLocationsPage> createState() => _FavoriteLocationsPageState();
+}
+
+class _FavoriteLocationsPageState extends State<FavoriteLocationsPage> {
+  late List<String> _locations;
+
+  @override
+  void initState() {
+    super.initState();
+    _locations = List.from(widget.favoriteLocations);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +45,7 @@ class FavoriteLocationsPage extends StatelessWidget {
             ],
           ),
         ),
-        child: favoriteLocations.isEmpty
+        child: _locations.isEmpty
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -59,10 +72,10 @@ class FavoriteLocationsPage extends StatelessWidget {
               )
             : ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: favoriteLocations.length,
+                itemCount: _locations.length,
                 itemBuilder: (context, index) {
-                  final location = favoriteLocations[index];
-                  final isCurrentCity = location == currentCity;
+                  final location = _locations[index];
+                  final isCurrentCity = location == widget.currentCity;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -84,8 +97,8 @@ class FavoriteLocationsPage extends StatelessWidget {
                         color: Colors.transparent,
                         child: ListTile(
                           onTap: () {
-                            onLocationSelected(location);
                             Navigator.pop(context);
+                            widget.onLocationSelected(location);
                           },
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -99,21 +112,19 @@ class FavoriteLocationsPage extends StatelessWidget {
                           ),
                           title: Text(
                             location,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: isCurrentCity
-                                      ? Theme.of(context).colorScheme.primary
-                                      : null,
-                                  fontWeight: isCurrentCity
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: isCurrentCity ? FontWeight.bold : FontWeight.normal,
                                 ),
                           ),
                           trailing: IconButton(
-                            icon: Icon(
-                              Icons.favorite,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            onPressed: () => onLocationRemoved(location),
+                            icon: const Icon(Icons.favorite),
+                            color: Theme.of(context).colorScheme.primary,
+                            onPressed: () {
+                              setState(() {
+                                _locations.remove(location);
+                              });
+                              widget.onLocationRemoved(location);
+                            },
                           ),
                         ),
                       ),
