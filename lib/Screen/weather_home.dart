@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../Services/services.dart';
 import 'forecast_page.dart';
+import '../widgets/hourly_forecast.dart';
+import '../widgets/sun_position.dart';
 
 class WeatherHome extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -345,6 +347,41 @@ class _WeatherHomeState extends State<WeatherHome> {
                               ),
                             ],
                           ),
+                        ),
+                        const SizedBox(height: 40),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Today\'s Forecast',
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                      fontSize: 20,
+                                    ),
+                              ),
+                              HourlyForecast(
+                                hourlyData: weatherData!['forecast']['forecastday'][0]['hour'],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        SunPosition(
+                          sunrise: weatherData!['forecast']['forecastday'][0]['astro']['sunrise'] ?? '06:00 AM',
+                          sunset: weatherData!['forecast']['forecastday'][0]['astro']['sunset'] ?? '06:00 PM',
+                          currentTime: weatherData!['current']['last_updated'] ?? DateTime.now().toIso8601String(),
                         ),
                         const SizedBox(height: 40),
                         Center(
