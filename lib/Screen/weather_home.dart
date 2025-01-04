@@ -17,7 +17,6 @@ class WeatherHome extends StatefulWidget {
   final bool showAlerts;
   final Function(bool) onTemperatureUnitChanged;
   final Function(bool) onAlertsToggled;
-  final Function(String) onThemeColorChanged;
 
   const WeatherHome({
     super.key,
@@ -27,7 +26,6 @@ class WeatherHome extends StatefulWidget {
     required this.showAlerts,
     required this.onTemperatureUnitChanged,
     required this.onAlertsToggled,
-    required this.onThemeColorChanged,
   });
 
   @override
@@ -216,11 +214,11 @@ class _WeatherHomeState extends State<WeatherHome> {
                 MaterialPageRoute(
                   builder: (context) => SettingsPage(
                     onThemeToggle: widget.onThemeToggle,
+                    isDarkMode: widget.isDarkMode,
                     useCelsius: widget.useCelsius,
                     onTemperatureUnitChanged: widget.onTemperatureUnitChanged,
                     showAlerts: widget.showAlerts,
                     onAlertsToggled: widget.onAlertsToggled,
-                    onThemeColorChanged: widget.onThemeColorChanged,
                   ),
                 ),
               );
