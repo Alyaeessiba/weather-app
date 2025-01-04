@@ -62,7 +62,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   size: 28,
                 ),
                 title: const Text('Use Celsius'),
-                subtitle: Text(_useCelsius ? 'Currently using Celsius (°C)' : 'Currently using Fahrenheit (°F)'),
+                subtitle: Text(_useCelsius
+                    ? 'Currently using Celsius (°C)'
+                    : 'Currently using Fahrenheit (°F)'),
                 trailing: Transform.scale(
                   scale: 1.0,
                   child: Switch.adaptive(
@@ -74,7 +76,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       widget.onTemperatureUnitChanged(value);
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
-                    activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    activeTrackColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -85,7 +88,9 @@ class _SettingsPageState extends State<SettingsPage> {
               'Theme',
               ListTile(
                 leading: Icon(
-                  Theme.of(context).brightness == Brightness.dark ? Icons.dark_mode : Icons.light_mode,
+                  Theme.of(context).brightness == Brightness.dark
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
                   color: Theme.of(context).colorScheme.primary,
                   size: 28,
                 ),
@@ -101,7 +106,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       widget.onThemeToggle();
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
-                    activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    activeTrackColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -117,7 +123,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   size: 28,
                 ),
                 title: const Text('Show Weather Alerts'),
-                subtitle: Text(_showAlerts ? 'Get notified about weather changes' : 'Notifications are disabled'),
+                subtitle: Text(_showAlerts
+                    ? 'Get notified about weather changes'
+                    : 'Notifications are disabled'),
                 trailing: Transform.scale(
                   scale: 1.0,
                   child: Switch.adaptive(
@@ -129,7 +137,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       widget.onAlertsToggled(value);
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
-                    activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    activeTrackColor:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.5),
                   ),
                 ),
               ),
@@ -140,8 +149,8 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Text(
                 'About',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ),
             _buildSettingCard(
@@ -160,9 +169,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     trailing: Text(
                       '1.0.0',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                     ),
                   ),
                   ListTile(
@@ -173,11 +182,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     title: const Text('Developer'),
                     trailing: Text(
-                      'Your Name',
+                      'ESSIBA Alyae',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                     ),
                   ),
                 ],
@@ -210,8 +219,8 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ),
           content,
