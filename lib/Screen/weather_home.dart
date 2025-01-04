@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../Model/weather_model.dart';
 import '../Services/services.dart';
+import 'forecast_page.dart';
 
 class WeatherHome extends StatefulWidget {
   const WeatherHome({super.key});
@@ -11,262 +11,192 @@ class WeatherHome extends StatefulWidget {
 }
 
 class _WeatherHomeState extends State<WeatherHome> {
-  late WeatherData weatherInfo;
-  bool isLoading = false;
-  myWeather() {
-    isLoading = false;
-    WeatherServices().fetchWeather().then((value) {
-      setState(() {
-        weatherInfo = value;
-        isLoading = true;
-      });
-    });
-  }
+  final WeatherServices _weatherServices = WeatherServices();
+  final TextEditingController _searchController = TextEditingController();
+  Map<String, dynamic>? weatherData;
+  String currentCity = 'London';
+  bool isLoading = true;
 
   @override
   void initState() {
-    weatherInfo = WeatherData(
-      name: '',
-      temperature: Temperature(current: 0.0),
-      humidity: 0,
-      wind: Wind(speed: 0.0),
-      maxTemperature: 0,
-      minTemperature: 0,
-      pressure: 0,
-      seaLevel: 0,
-      weather: [],
-    );
-    myWeather();
     super.initState();
+    _loadWeather();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    String formattedDate =
-        DateFormat('EEEE d, MMMM yyyy').format(DateTime.now());
-    String formattedTime = DateFormat('hh:mm a').format(DateTime.now());
-    return Scaffold(
-      backgroundColor: const Color(0xFF676BD0),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Center(
-              child: isLoading
-                  ? WeatherDetail(
-                      weather: weatherInfo,
-                      formattedDate: formattedDate,
-                      formattedTime: formattedTime,
-                    )
-                  : const CircularProgressIndicator(color: Colors.white,),
-            ),
-          ],
+  Future<void> _loadWeather() async {
+    setState(() => isLoading = true);
+    try {
+      final data = await _weatherServices.fetchCurrentWeather(currentCity);
+      setState(() {
+        weatherData = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showSearchDialog() async {
+    final result = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Search City'),
+        content: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Enter city name',
+          ),
+          onSubmitted: (value) => Navigator.pop(context, value),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, _searchController.text),
+            child: const Text('Search'),
+          ),
+        ],
       ),
     );
-  }
-}
 
-class WeatherDetail extends StatelessWidget {
-  final WeatherData weather;
-  final String formattedDate;
-  final String formattedTime;
-  const WeatherDetail({
-    super.key,
-    required this.weather,
-    required this.formattedDate,
-    required this.formattedTime,
-  });
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        currentCity = result;
+        _loadWeather();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // for current address name
-        Text(
-          weather.name,
-          style: const TextStyle(
-            fontSize: 25,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+    String formattedDate = DateFormat('EEEE d, MMMM yyyy').format(DateTime.now());
+    String formattedTime = DateFormat('hh:mm a').format(DateTime.now());
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF676BD0),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: _showSearchDialog,
           ),
-        ),
-        // for current temperature of my location
-        Text(
-          "${weather.temperature.current.toStringAsFixed(2)}°C",
-          style: const TextStyle(
-            fontSize: 40,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        // fpr weather condition
-        if (weather.weather.isNotEmpty)
+        ],
+      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : weatherData == null
+              ? const Center(child: Text('Error loading weather data'))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        weatherData!['location']['name'],
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        formattedDate,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      Text(
+                        formattedTime,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              '${weatherData!['current']['temp_c'].round()}°C',
+                              style: const TextStyle(
+                                fontSize: 64,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              weatherData!['current']['condition']['text'],
+                              style: const TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildWeatherDetail(
+                        'Humidity',
+                        '${weatherData!['current']['humidity']}%',
+                      ),
+                      _buildWeatherDetail(
+                        'Wind Speed',
+                        '${weatherData!['current']['wind_kph']} km/h',
+                      ),
+                      _buildWeatherDetail(
+                        'Pressure',
+                        '${weatherData!['current']['pressure_mb']} mb',
+                      ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ForecastPage(
+                                  city: currentCity,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.calendar_today),
+                          label: const Text('7-Day Forecast'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF676BD0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _buildWeatherDetail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
           Text(
-            weather.weather[0].main,
+            label,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          Text(
+            value,
             style: const TextStyle(
-              fontSize: 20,
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
-        const SizedBox(height: 30),
-        // for current date and time
-        Text(
-          formattedDate,
-          style: const TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          formattedTime,
-          style: const TextStyle(
-            fontSize: 18,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 30),
-        Container(
-          height: 200,
-          width: 200,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/cloudy.png"),
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        // for more weather detail
-        Container(
-          height: 250,
-          decoration: BoxDecoration(
-            color: Colors.deepPurple,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.wind_power,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Wind", value: "${weather.wind.speed}km/h"),
-                      ],
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.sunny,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Max",
-                            value:
-                                "${weather.maxTemperature.toStringAsFixed(2)}°C"),
-                      ],
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.wind_power,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Min",
-                            value:
-                                "${weather.minTemperature.toStringAsFixed(2)}°C"),
-                      ],
-                    ),
-                  ],
-                ),
-                const Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.water_drop,
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Humidity", value: "${weather.humidity}%"),
-                      ],
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.air,
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Pressure", value: "${weather.pressure}hPa"),
-                      ],
-                    ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.leaderboard,
-                          color: Colors.amber,
-                        ),
-                        const SizedBox(height: 5),
-                        weatherInfoCard(
-                            title: "Sea-Level", value: "${weather.seaLevel}m"),
-                      ],
-                    ),
-                  ],
-                )
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Column weatherInfoCard({required String title, required String value}) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
-        ),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-          ),
-        )
-      ],
+        ],
+      ),
     );
   }
 }
