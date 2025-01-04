@@ -12,10 +12,22 @@ import 'settings_page.dart';
 
 class WeatherHome extends StatefulWidget {
   final VoidCallback onThemeToggle;
+  final bool isDarkMode;
+  final bool useCelsius;
+  final bool showAlerts;
+  final Function(bool) onTemperatureUnitChanged;
+  final Function(bool) onAlertsToggled;
+  final Function(String) onThemeColorChanged;
 
   const WeatherHome({
     super.key,
     required this.onThemeToggle,
+    required this.isDarkMode,
+    required this.useCelsius,
+    required this.showAlerts,
+    required this.onTemperatureUnitChanged,
+    required this.onAlertsToggled,
+    required this.onThemeColorChanged,
   });
 
   @override
@@ -30,8 +42,6 @@ class _WeatherHomeState extends State<WeatherHome> {
   bool isLoading = true;
   String currentCity = 'London';
   List<String> favoriteLocations = ['London'];
-  bool useCelsius = true;
-  bool showAlerts = true;
 
   // List of major cities
   final List<String> cities = [
@@ -176,9 +186,8 @@ class _WeatherHomeState extends State<WeatherHome> {
     }
   }
 
-  
   String _getTemperature(double temp) {
-    return useCelsius ? '${temp.round()}°C' : '${(temp * 9 / 5 + 32).round()}°F';
+    return widget.useCelsius ? '${temp.round()}°C' : '${(temp * 9 / 5 + 32).round()}°F';
   }
 
   @override
@@ -200,28 +209,18 @@ class _WeatherHomeState extends State<WeatherHome> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.settings,
-              color: Theme.of(context).colorScheme.onBackground,
-            ),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => SettingsPage(
                     onThemeToggle: widget.onThemeToggle,
-                    useCelsius: useCelsius,
-                    onTemperatureUnitChanged: (bool value) {
-                      setState(() {
-                        useCelsius = value;
-                      });
-                    },
-                    showAlerts: showAlerts,
-                    onAlertsToggled: (bool value) {
-                      setState(() {
-                        showAlerts = value;
-                      });
-                    },
+                    useCelsius: widget.useCelsius,
+                    onTemperatureUnitChanged: widget.onTemperatureUnitChanged,
+                    showAlerts: widget.showAlerts,
+                    onAlertsToggled: widget.onAlertsToggled,
+                    onThemeColorChanged: widget.onThemeColorChanged,
                   ),
                 ),
               );
@@ -595,7 +594,7 @@ class _WeatherHomeState extends State<WeatherHome> {
                           ),
                           const SizedBox(height: 16),
                           // Weather Alerts
-                          if (weatherData!['alerts'] != null && showAlerts) ...[
+                          if (weatherData!['alerts'] != null && widget.showAlerts) ...[
                             Text(
                               'Weather Alerts',
                               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
