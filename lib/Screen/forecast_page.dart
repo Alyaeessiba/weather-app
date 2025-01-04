@@ -60,38 +60,29 @@ class _ForecastPageState extends State<ForecastPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          '7-Day Forecast for ${widget.city}',
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: 20,
-              ),
-        ),
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: Theme.of(context).colorScheme.onSurface),
+        title: Text('${widget.city} 7-Day Forecast'),
       ),
-      body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.secondary,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+            ],
+          ),
+        ),
+        child: isLoading
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.secondary,
+                  ),
                 ),
-              ),
-            )
-          : Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).scaffoldBackgroundColor,
-                    Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
-                  ],
-                ),
-              ),
-              child: ListView.builder(
+              )
+            : ListView.builder(
                 padding: const EdgeInsets.all(24),
                 itemCount: forecastData.length,
                 itemBuilder: (context, index) {
@@ -100,6 +91,9 @@ class _ForecastPageState extends State<ForecastPage> {
                   final condition = day['day']['condition']['text'];
                   final maxTemp = day['day']['maxtemp_c'];
                   final minTemp = day['day']['mintemp_c'];
+                  final humidity = day['day']['avghumidity'];
+                  final windSpeed = day['day']['maxwind_kph'];
+                  final rainChance = day['day']['daily_chance_of_rain'];
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
@@ -114,9 +108,9 @@ class _ForecastPageState extends State<ForecastPage> {
                         ),
                       ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Row(
+                    child: ExpansionTile(
+                      childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      title: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(12),
@@ -130,16 +124,14 @@ class _ForecastPageState extends State<ForecastPage> {
                               size: 32,
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   DateFormat('EEEE, MMM d').format(date),
-                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -154,24 +146,81 @@ class _ForecastPageState extends State<ForecastPage> {
                             children: [
                               Text(
                                 '${maxTemp.round()}°C',
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                               ),
-                              const SizedBox(height: 4),
                               Text(
                                 '${minTemp.round()}°C',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.secondary,
+                                    ),
                               ),
                             ],
                           ),
                         ],
                       ),
+                      children: [
+                        const Divider(),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildDetailColumn(
+                              context,
+                              Icons.water_drop,
+                              'Humidity',
+                              '$humidity%',
+                            ),
+                            _buildDetailColumn(
+                              context,
+                              Icons.air,
+                              'Wind',
+                              '$windSpeed km/h',
+                            ),
+                            _buildDetailColumn(
+                              context,
+                              Icons.umbrella,
+                              'Rain',
+                              '$rainChance%',
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 },
               ),
-            ),
+      ),
+    );
+  }
+
+  Widget _buildDetailColumn(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Theme.of(context).colorScheme.primary,
+          size: 24,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
     );
   }
 }

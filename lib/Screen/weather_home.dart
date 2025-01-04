@@ -103,27 +103,32 @@ class _WeatherHomeState extends State<WeatherHome> {
     String formattedTime = DateFormat('hh:mm a').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).cardColor,
-        elevation: 0,
+        title: Text(
+          currentCity,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.dark
-                  ? Icons.light_mode
-                  : Icons.dark_mode,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            onPressed: widget.onThemeToggle,
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.search,
-              color: Theme.of(context).colorScheme.onSurface,
-              size: 28,
-            ),
-            onPressed: _showSearchDialog,
+          Row(
+            children: [
+              Icon(
+                Theme.of(context).brightness == Brightness.light
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+                size: 20,
+              ),
+              Switch(
+                value: Theme.of(context).brightness == Brightness.dark,
+                onChanged: (bool value) {
+                  widget.onThemeToggle();
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              ),
+            ],
           ),
         ],
       ),
@@ -135,281 +140,369 @@ class _WeatherHomeState extends State<WeatherHome> {
                 ),
               ),
             )
-          : weatherData == null
-              ? Center(
-                  child: Text(
-                    'Error loading weather data',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                )
-              : Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Theme.of(context).scaffoldBackgroundColor,
-                        Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
-                      ],
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          weatherData!['location']['name'],
-                          style: Theme.of(context).textTheme.headlineLarge,
+          : Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 80), // Added bottom padding for FAB
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter city name',
+                                prefixIcon: const Icon(Icons.search),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Container(
+                            height: 56,
+                            width: 56,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Theme.of(context).colorScheme.primary,
+                                  Theme.of(context).colorScheme.secondary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              onPressed: () {
+                                if (_searchController.text.isNotEmpty) {
+                                  setState(() {
+                                    isLoading = true;
+                                    currentCity = _searchController.text;
+                                  });
+                                  _loadWeather();
+                                  _searchController.clear();
+                                }
+                              },
+                              icon: const Icon(
+                                Icons.search,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      Text(
+                        weatherData!['location']['name'],
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            formattedDate,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(width: 16),
+                          Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            formattedTime,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Icon(
+                                  _getWeatherIcon(weatherData!['current']['condition']['text']),
+                                  size: 64,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                '${weatherData!['current']['temp_c'].round()}°C',
+                                style: Theme.of(context).textTheme.headlineLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                weatherData!['current']['condition']['text'],
+                                style: Theme.of(context).textTheme.headlineMedium,
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 16,
-                              color: Theme.of(context).textTheme.bodyMedium?.color,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              formattedDate,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(
-                              Icons.access_time,
-                              size: 16,
-                              color: Theme.of(context).textTheme.bodyMedium?.color,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              formattedTime,
-                              style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 40),
-                        Center(
-                          child: Container(
-                            padding: const EdgeInsets.all(32),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 24,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Weather Details',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontSize: 20,
+                                  ),
                             ),
-                            child: Column(
+                            const SizedBox(height: 24),
+                            _buildWeatherDetail(
+                              context,
+                              'Humidity',
+                              '${weatherData!['current']['humidity']}%',
+                              Icons.water_drop,
+                            ),
+                            Divider(color: Theme.of(context).dividerColor, height: 32),
+                            _buildWeatherDetail(
+                              context,
+                              'Wind Speed',
+                              '${weatherData!['current']['wind_kph']} km/h',
+                              Icons.air,
+                            ),
+                            Divider(color: Theme.of(context).dividerColor, height: 32),
+                            _buildWeatherDetail(
+                              context,
+                              'Pressure',
+                              '${weatherData!['current']['pressure_mb']} mb',
+                              Icons.speed,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Additional Information',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontSize: 20,
+                                  ),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Icon(
-                                    _getWeatherIcon(weatherData!['current']['condition']['text']),
-                                    size: 64,
-                                    color: Theme.of(context).colorScheme.primary,
+                                Expanded(
+                                  child: _buildWeatherInfo(
+                                    context,
+                                    'UV Index',
+                                    '${weatherData!['current']['uv']}',
+                                    Icons.wb_sunny_outlined,
                                   ),
                                 ),
-                                const SizedBox(height: 24),
-                                Text(
-                                  '${weatherData!['current']['temp_c'].round()}°C',
-                                  style: Theme.of(context).textTheme.headlineLarge,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  weatherData!['current']['condition']['text'],
-                                  style: Theme.of(context).textTheme.headlineMedium,
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: _buildWeatherInfo(
+                                    context,
+                                    'Feels Like',
+                                    '${weatherData!['current']['feelslike_c']}°C',
+                                    Icons.thermostat_outlined,
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Weather Details',
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      fontSize: 20,
-                                    ),
-                              ),
-                              const SizedBox(height: 24),
-                              _buildWeatherDetail(
-                                context,
-                                'Humidity',
-                                '${weatherData!['current']['humidity']}%',
-                                Icons.water_drop,
-                              ),
-                              Divider(color: Theme.of(context).dividerColor, height: 32),
-                              _buildWeatherDetail(
-                                context,
-                                'Wind Speed',
-                                '${weatherData!['current']['wind_kph']} km/h',
-                                Icons.air,
-                              ),
-                              Divider(color: Theme.of(context).dividerColor, height: 32),
-                              _buildWeatherDetail(
-                                context,
-                                'Pressure',
-                                '${weatherData!['current']['pressure_mb']} mb',
-                                Icons.speed,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Additional Information',
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      fontSize: 20,
-                                    ),
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildWeatherInfo(
-                                      context,
-                                      'UV Index',
-                                      '${weatherData!['current']['uv']}',
-                                      Icons.wb_sunny_outlined,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: _buildWeatherInfo(
-                                      context,
-                                      'Feels Like',
-                                      '${weatherData!['current']['feelslike_c']}°C',
-                                      Icons.thermostat_outlined,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildWeatherInfo(
-                                      context,
-                                      'Visibility',
-                                      '${weatherData!['current']['vis_km']} km',
-                                      Icons.visibility_outlined,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: _buildWeatherInfo(
-                                      context,
-                                      'Cloud Cover',
-                                      '${weatherData!['current']['cloud']}%',
-                                      Icons.cloud_outlined,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 24,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Today\'s Forecast',
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                      fontSize: 20,
-                                    ),
-                              ),
-                              HourlyForecast(
-                                hourlyData: weatherData!['forecast']['forecastday'][0]['hour'],
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        SunPosition(
-                          sunrise: weatherData!['forecast']['forecastday'][0]['astro']['sunrise'] ?? '06:00 AM',
-                          sunset: weatherData!['forecast']['forecastday'][0]['astro']['sunset'] ?? '06:00 PM',
-                          currentTime: weatherData!['current']['last_updated'] ?? DateTime.now().toIso8601String(),
-                        ),
-                        const SizedBox(height: 40),
-                        Center(
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ForecastPage(
-                                    city: currentCity,
+                            const SizedBox(height: 24),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildWeatherInfo(
+                                    context,
+                                    'Visibility',
+                                    '${weatherData!['current']['vis_km']} km',
+                                    Icons.visibility_outlined,
                                   ),
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.calendar_today, size: 20),
-                            label: Text(
+                                const SizedBox(width: 24),
+                                Expanded(
+                                  child: _buildWeatherInfo(
+                                    context,
+                                    'Cloud Cover',
+                                    '${weatherData!['current']['cloud']}%',
+                                    Icons.cloud_outlined,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Today\'s Forecast',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                    fontSize: 20,
+                                  ),
+                            ),
+                            HourlyForecast(
+                              hourlyData: weatherData!['forecast']['forecastday'][0]['hour'],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      SunPosition(
+                        sunrise: weatherData!['forecast']['forecastday'][0]['astro']['sunrise'] ?? '06:00 AM',
+                        sunset: weatherData!['forecast']['forecastday'][0]['astro']['sunset'] ?? '06:00 PM',
+                        currentTime: weatherData!['current']['last_updated'] ?? DateTime.now().toIso8601String(),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  right: 20,
+                  bottom: 20,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ForecastPage(
+                                city: currentCity,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
                               '7-Day Forecast',
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Theme.of(context).colorScheme.onPrimary,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
                                   ),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
                   ),
                 ),
+              ],
+            ),
     );
   }
 
