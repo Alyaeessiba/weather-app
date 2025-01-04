@@ -8,7 +8,7 @@ import 'favorite_locations_page.dart';
 import '../widgets/weather_alert.dart';
 import '../widgets/weather_stats.dart';
 import '../widgets/wind_moon_info.dart';
-import '../widgets/weather_settings.dart';
+import 'settings_page.dart';
 
 class WeatherHome extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -31,7 +31,6 @@ class _WeatherHomeState extends State<WeatherHome> {
   List<String> favoriteLocations = ['London'];
   bool useCelsius = true;
   bool showAlerts = true;
-  String selectedTheme = 'System';
 
   IconData _getWeatherIcon(String condition) {
     condition = condition.toLowerCase();
@@ -106,6 +105,10 @@ class _WeatherHomeState extends State<WeatherHome> {
     }
   }
 
+  String _getTemperature(double temp) {
+    return useCelsius ? '${temp.round()}°C' : '${(temp * 9 / 5 + 32).round()}°F';
+  }
+
   @override
   Widget build(BuildContext context) {
     String formattedDate = DateFormat('EEEE d, MMMM yyyy').format(DateTime.now());
@@ -138,6 +141,33 @@ class _WeatherHomeState extends State<WeatherHome> {
                 activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
               ),
             ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsPage(
+                    useCelsius: useCelsius,
+                    showAlerts: showAlerts,
+                    onTemperatureUnitChanged: (value) {
+                      setState(() {
+                        useCelsius = value;
+                      });
+                    },
+                    onAlertsToggled: (value) {
+                      setState(() {
+                        showAlerts = value;
+                      });
+                    },
+                    onThemeToggle: () {
+                      widget.onThemeToggle();
+                    },
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -318,7 +348,7 @@ class _WeatherHomeState extends State<WeatherHome> {
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              '${weatherData!['current']['temp_c'].round()}°C',
+                              _getTemperature(weatherData!['current']['temp_c']),
                               style: Theme.of(context).textTheme.headlineLarge,
                             ),
                             const SizedBox(height: 8),
@@ -484,27 +514,6 @@ class _WeatherHomeState extends State<WeatherHome> {
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 40),
-                    WeatherSettings(
-                      useCelsius: useCelsius,
-                      showAlerts: showAlerts,
-                      selectedTheme: selectedTheme,
-                      onTemperatureUnitChanged: (value) {
-                        setState(() {
-                          useCelsius = value;
-                        });
-                      },
-                      onAlertsToggled: (value) {
-                        setState(() {
-                          showAlerts = value;
-                        });
-                      },
-                      onThemeChanged: (value) {
-                        setState(() {
-                          selectedTheme = value;
-                        });
-                      },
                     ),
                     const SizedBox(height: 40),
                     Container(
