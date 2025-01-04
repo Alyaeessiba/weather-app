@@ -86,19 +86,6 @@ class _WeatherHomeState extends State<WeatherHome> {
     _loadWeather();
   }
 
-  Future<void> _loadWeather() async {
-    setState(() => isLoading = true);
-    try {
-      final data = await _weatherServices.fetchCurrentWeather(currentCity);
-      setState(() {
-        weatherData = data;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() => isLoading = false);
-    }
-  }
-
   Future<void> _showSearchDialog() async {
     String? result = await showDialog<String>(
       context: context,
@@ -176,6 +163,20 @@ class _WeatherHomeState extends State<WeatherHome> {
     }
   }
 
+  Future<void> _loadWeather() async {
+    setState(() => isLoading = true);
+    try {
+      final data = await _weatherServices.fetchCurrentWeather(currentCity);
+      setState(() {
+        weatherData = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  
   String _getTemperature(double temp) {
     return useCelsius ? '${temp.round()}°C' : '${(temp * 9 / 5 + 32).round()}°F';
   }
@@ -187,16 +188,22 @@ class _WeatherHomeState extends State<WeatherHome> {
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: Text(
           'Weather Forecast',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onBackground,
           ),
         ),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: Icon(
+              Icons.settings,
+              color: Theme.of(context).colorScheme.onBackground,
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -223,388 +230,392 @@ class _WeatherHomeState extends State<WeatherHome> {
         ],
       ),
       body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            )
-          : Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).scaffoldBackgroundColor,
-                    Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
-                  ],
-                ),
-              ),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Enter city name',
-                              prefixIcon: const Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Container(
-                          height: 56,
-                          width: 56,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Theme.of(context).colorScheme.primary,
-                                Theme.of(context).colorScheme.secondary,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              if (_searchController.text.isNotEmpty) {
-                                setState(() {
-                                  isLoading = true;
-                                  currentCity = _searchController.text;
-                                });
-                                _loadWeather();
-                                _searchController.clear();
-                              }
-                            },
-                            icon: const Icon(
-                              Icons.search,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          weatherData!['location']['name'],
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                favoriteLocations.contains(currentCity)
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  if (favoriteLocations.contains(currentCity)) {
-                                    favoriteLocations.remove(currentCity);
-                                  } else {
-                                    favoriteLocations.add(currentCity);
-                                  }
-                                });
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.list),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => FavoriteLocationsPage(
-                                      favoriteLocations: favoriteLocations,
-                                      currentCity: currentCity,
-                                      onLocationSelected: (location) {
-                                        setState(() {
-                                          currentCity = location;
-                                          isLoading = true;
-                                        });
-                                        _loadWeather();
-                                      },
-                                      onLocationRemoved: (location) {
-                                        setState(() {
-                                          favoriteLocations.remove(location);
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                _getWeatherIcon(weatherData!['current']['condition']['text']),
-                                size: 64,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              _getTemperature(weatherData!['current']['temp_c']),
-                              style: Theme.of(context).textTheme.headlineLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              weatherData!['current']['condition']['text'],
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              weatherData!['location']['name'],
-                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
+          ? const Center(child: CircularProgressIndicator())
+          : weatherData == null
+              ? Center(
+                  child: Text(
+                    'Failed to load weather data',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadWeather,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Weather Details',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontSize: 20,
-                                ),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildWeatherDetail(
-                            context,
-                            'Humidity',
-                            '${weatherData!['current']['humidity']}%',
-                            Icons.water_drop,
-                          ),
-                          Divider(color: Theme.of(context).dividerColor, height: 32),
-                          _buildWeatherDetail(
-                            context,
-                            'Wind Speed',
-                            '${weatherData!['current']['wind_kph']} km/h',
-                            Icons.air,
-                          ),
-                          Divider(color: Theme.of(context).dividerColor, height: 32),
-                          _buildWeatherDetail(
-                            context,
-                            'Pressure',
-                            '${weatherData!['current']['pressure_mb']} mb',
-                            Icons.speed,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    if (weatherData!['alerts'] != null && showAlerts) ...[
-                      Text(
-                        'Weather Alerts',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontSize: 20,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      WeatherAlert(
-                        title: weatherData!['alerts']['alert'][0]['event'] ?? 'Weather Alert',
-                        description: weatherData!['alerts']['alert'][0]['desc'] ?? 'No description available',
-                        severity: AlertSeverity.moderate,
-                        time: DateTime.now(),
-                      ),
-                      const SizedBox(height: 40),
-                    ],
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Weather Statistics',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontSize: 20,
-                                ),
-                          ),
-                          const SizedBox(height: 24),
-                          WeatherStats(
-                            temperatures: [
-                              for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
-                                double.parse(hour['temp_c'].toString())
-                            ],
-                            dates: [
-                              for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
-                                DateTime.parse(hour['time'])
-                            ],
-                            minTemp: weatherData!['forecast']['forecastday'][0]['day']['mintemp_c'],
-                            maxTemp: weatherData!['forecast']['forecastday'][0]['day']['maxtemp_c'],
-                            precipitation: weatherData!['forecast']['forecastday'][0]['day']['daily_chance_of_rain'] / 100,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Wind & Moon',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontSize: 20,
-                                ),
-                          ),
-                          const SizedBox(height: 24),
+                          // Search Bar
                           Row(
                             children: [
                               Expanded(
-                                child: WindCompass(
-                                  windDirection: weatherData!['current']['wind_degree'].toDouble(),
-                                  windSpeed: weatherData!['current']['wind_kph'].toDouble(),
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter city name',
+                                    prefixIcon: const Icon(Icons.search),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 16,
+                                    ),
+                                  ),
+                                  onSubmitted: (value) {
+                                    if (value.isNotEmpty) {
+                                      setState(() {
+                                        currentCity = value;
+                                        isLoading = true;
+                                      });
+                                      _loadWeather();
+                                      _searchController.clear();
+                                    }
+                                  },
                                 ),
                               ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                child: MoonPhase(
-                                  phase: 0.5, // You'll need to calculate this based on the moon phase data
-                                  phaseName: weatherData!['forecast']['forecastday'][0]['astro']['moon_phase'],
+                              const SizedBox(width: 16),
+                              Container(
+                                height: 56,
+                                width: 56,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Theme.of(context).colorScheme.primary,
+                                      Theme.of(context).colorScheme.secondary,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  onPressed: () {
+                                    if (_searchController.text.isNotEmpty) {
+                                      setState(() {
+                                        currentCity = _searchController.text;
+                                        isLoading = true;
+                                      });
+                                      _loadWeather();
+                                      _searchController.clear();
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    Icons.search,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
+                          const SizedBox(height: 16),
+                          // Favorite and Location List Button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    weatherData!['location']['name'],
+                                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    formattedDate,
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                    ),
+                                  ),
+                                  Text(
+                                    formattedTime,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      favoriteLocations.contains(currentCity)
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        if (favoriteLocations.contains(currentCity)) {
+                                          favoriteLocations.remove(currentCity);
+                                        } else {
+                                          favoriteLocations.add(currentCity);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.list),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => FavoriteLocationsPage(
+                                            favoriteLocations: favoriteLocations,
+                                            currentCity: currentCity,
+                                            onLocationSelected: (location) {
+                                              setState(() {
+                                                currentCity = location;
+                                                isLoading = true;
+                                              });
+                                              _loadWeather();
+                                            },
+                                            onLocationRemoved: (location) {
+                                              setState(() {
+                                                favoriteLocations.remove(location);
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Today\'s Forecast',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontSize: 20,
+                          const SizedBox(height: 16),
+                          // Weather Card
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Icon(
+                                        _getWeatherIcon(weatherData!['current']['condition']['text']),
+                                        size: 64,
+                                        color: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    Text(
+                                      _getTemperature(weatherData!['current']['temp_c']),
+                                      style: Theme.of(context).textTheme.headlineLarge,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      weatherData!['current']['condition']['text'],
+                                      style: Theme.of(context).textTheme.headlineMedium,
+                                    ),
+                                  ],
                                 ),
+                              ),
+                            ),
                           ),
-                          HourlyForecast(
-                            hourlyData: weatherData!['forecast']['forecastday'][0]['hour'],
+                          const SizedBox(height: 16),
+                          // Weather Details
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Weather Details',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildWeatherDetail(
+                                    context,
+                                    'Humidity',
+                                    '${weatherData!['current']['humidity']}%',
+                                    Icons.water_drop,
+                                  ),
+                                  const Divider(),
+                                  _buildWeatherDetail(
+                                    context,
+                                    'Wind Speed',
+                                    '${weatherData!['current']['wind_kph']} km/h',
+                                    Icons.air,
+                                  ),
+                                  const Divider(),
+                                  _buildWeatherDetail(
+                                    context,
+                                    'Pressure',
+                                    '${weatherData!['current']['pressure_mb']} mb',
+                                    Icons.speed,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
+                          const SizedBox(height: 16),
+                          // Weather Statistics
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Weather Statistics',
+                                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  WeatherStats(
+                                    temperatures: [
+                                      for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
+                                        double.parse(hour['temp_c'].toString())
+                                    ],
+                                    dates: [
+                                      for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
+                                        DateTime.parse(hour['time'])
+                                    ],
+                                    minTemp: weatherData!['forecast']['forecastday'][0]['day']['mintemp_c'],
+                                    maxTemp: weatherData!['forecast']['forecastday'][0]['day']['maxtemp_c'],
+                                    precipitation: weatherData!['forecast']['forecastday'][0]['day']['daily_chance_of_rain'] / 100,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Today's Forecast
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Today\'s Forecast',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  HourlyForecast(
+                                    hourlyData: weatherData!['forecast']['forecastday'][0]['hour'],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Sun Position
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sun Position',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  SunPosition(
+                                    sunrise: weatherData!['forecast']['forecastday'][0]['astro']['sunrise'] ?? '06:00 AM',
+                                    sunset: weatherData!['forecast']['forecastday'][0]['astro']['sunset'] ?? '06:00 PM',
+                                    currentTime: weatherData!['current']['last_updated'] ?? DateTime.now().toIso8601String(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Wind Information
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Wind',
+                                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Center(
+                                    child: WindCompass(
+                                      windDirection: weatherData!['current']['wind_degree'].toDouble(),
+                                      windSpeed: weatherData!['current']['wind_kph'].toDouble(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Weather Alerts
+                          if (weatherData!['alerts'] != null && showAlerts) ...[
+                            Text(
+                              'Weather Alerts',
+                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            WeatherAlert(
+                              title: weatherData!['alerts']['alert'][0]['event'] ?? 'Weather Alert',
+                              description: weatherData!['alerts']['alert'][0]['desc'] ?? 'No description available',
+                              severity: AlertSeverity.moderate,
+                              time: DateTime.now(),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    SunPosition(
-                      sunrise: weatherData!['forecast']['forecastday'][0]['astro']['sunrise'] ?? '06:00 AM',
-                      sunset: weatherData!['forecast']['forecastday'][0]['astro']['sunset'] ?? '06:00 PM',
-                      currentTime: weatherData!['current']['last_updated'] ?? DateTime.now().toIso8601String(),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
