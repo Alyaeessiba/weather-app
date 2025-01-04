@@ -5,6 +5,10 @@ import 'forecast_page.dart';
 import '../widgets/hourly_forecast.dart';
 import '../widgets/sun_position.dart';
 import 'favorite_locations_page.dart';
+import '../widgets/weather_alert.dart';
+import '../widgets/weather_stats.dart';
+import '../widgets/wind_moon_info.dart';
+import '../widgets/weather_settings.dart';
 
 class WeatherHome extends StatefulWidget {
   final VoidCallback onThemeToggle;
@@ -25,6 +29,9 @@ class _WeatherHomeState extends State<WeatherHome> {
   bool isLoading = true;
   String currentCity = 'London';
   List<String> favoriteLocations = ['London'];
+  bool useCelsius = true;
+  bool showAlerts = true;
+  String selectedTheme = 'System';
 
   IconData _getWeatherIcon(String condition) {
     condition = condition.toLowerCase();
@@ -379,6 +386,22 @@ class _WeatherHomeState extends State<WeatherHome> {
                       ),
                     ),
                     const SizedBox(height: 40),
+                    if (weatherData!['alerts'] != null && showAlerts) ...[
+                      Text(
+                        'Weather Alerts',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: 20,
+                            ),
+                      ),
+                      const SizedBox(height: 16),
+                      WeatherAlert(
+                        title: weatherData!['alerts']['alert'][0]['event'] ?? 'Weather Alert',
+                        description: weatherData!['alerts']['alert'][0]['desc'] ?? 'No description available',
+                        severity: AlertSeverity.moderate,
+                        time: DateTime.now(),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -396,7 +419,47 @@ class _WeatherHomeState extends State<WeatherHome> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Additional Information',
+                            'Weather Statistics',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontSize: 20,
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          WeatherStats(
+                            temperatures: [
+                              for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
+                                double.parse(hour['temp_c'].toString())
+                            ],
+                            dates: [
+                              for (var hour in weatherData!['forecast']['forecastday'][0]['hour'])
+                                DateTime.parse(hour['time'])
+                            ],
+                            minTemp: weatherData!['forecast']['forecastday'][0]['day']['mintemp_c'],
+                            maxTemp: weatherData!['forecast']['forecastday'][0]['day']['maxtemp_c'],
+                            precipitation: weatherData!['forecast']['forecastday'][0]['day']['daily_chance_of_rain'] / 100,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Wind & Moon',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                   fontSize: 20,
                                 ),
@@ -405,48 +468,43 @@ class _WeatherHomeState extends State<WeatherHome> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildWeatherInfo(
-                                  context,
-                                  'UV Index',
-                                  '${weatherData!['current']['uv']}',
-                                  Icons.wb_sunny_outlined,
+                                child: WindCompass(
+                                  windDirection: weatherData!['current']['wind_degree'].toDouble(),
+                                  windSpeed: weatherData!['current']['wind_kph'].toDouble(),
                                 ),
                               ),
                               const SizedBox(width: 24),
                               Expanded(
-                                child: _buildWeatherInfo(
-                                  context,
-                                  'Feels Like',
-                                  '${weatherData!['current']['feelslike_c']}°C',
-                                  Icons.thermostat_outlined,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildWeatherInfo(
-                                  context,
-                                  'Visibility',
-                                  '${weatherData!['current']['vis_km']} km',
-                                  Icons.visibility_outlined,
-                                ),
-                              ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                child: _buildWeatherInfo(
-                                  context,
-                                  'Cloud Cover',
-                                  '${weatherData!['current']['cloud']}%',
-                                  Icons.cloud_outlined,
+                                child: MoonPhase(
+                                  phase: 0.5, // You'll need to calculate this based on the moon phase data
+                                  phaseName: weatherData!['forecast']['forecastday'][0]['astro']['moon_phase'],
                                 ),
                               ),
                             ],
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 40),
+                    WeatherSettings(
+                      useCelsius: useCelsius,
+                      showAlerts: showAlerts,
+                      selectedTheme: selectedTheme,
+                      onTemperatureUnitChanged: (value) {
+                        setState(() {
+                          useCelsius = value;
+                        });
+                      },
+                      onAlertsToggled: (value) {
+                        setState(() {
+                          showAlerts = value;
+                        });
+                      },
+                      onThemeChanged: (value) {
+                        setState(() {
+                          selectedTheme = value;
+                        });
+                      },
                     ),
                     const SizedBox(height: 40),
                     Container(
