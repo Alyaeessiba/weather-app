@@ -82,6 +82,33 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 16),
             _buildSettingCard(
               context,
+              'Theme',
+              ListTile(
+                leading: Icon(
+                  Theme.of(context).brightness == Brightness.dark ? Icons.dark_mode : Icons.light_mode,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 28,
+                ),
+                title: const Text('Dark Theme'),
+                subtitle: Text(Theme.of(context).brightness == Brightness.dark
+                    ? 'Dark theme is enabled'
+                    : 'Light theme is enabled'),
+                trailing: Transform.scale(
+                  scale: 1.0,
+                  child: Switch.adaptive(
+                    value: Theme.of(context).brightness == Brightness.dark,
+                    onChanged: (bool value) {
+                      widget.onThemeToggle();
+                    },
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildSettingCard(
+              context,
               'Weather Alerts',
               ListTile(
                 leading: Icon(
@@ -100,33 +127,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         _showAlerts = value;
                       });
                       widget.onAlertsToggled(value);
-                    },
-                    activeColor: Theme.of(context).colorScheme.primary,
-                    activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildSettingCard(
-              context,
-              'Theme',
-              ListTile(
-                leading: Icon(
-                  Theme.of(context).brightness == Brightness.dark ? Icons.dark_mode : Icons.light_mode,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 28,
-                ),
-                title: const Text('Dark Theme'),
-                subtitle: Text(Theme.of(context).brightness == Brightness.dark
-                    ? 'Dark theme is enabled'
-                    : 'Light theme is enabled'),
-                trailing: Transform.scale(
-                  scale: 1.0,
-                  child: Switch.adaptive(
-                    value: Theme.of(context).brightness == Brightness.dark,
-                    onChanged: (bool value) {
-                      widget.onThemeToggle();
                     },
                     activeColor: Theme.of(context).colorScheme.primary,
                     activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),

@@ -25,12 +25,39 @@ class WeatherHome extends StatefulWidget {
 class _WeatherHomeState extends State<WeatherHome> {
   final WeatherServices _weatherServices = WeatherServices();
   final TextEditingController _searchController = TextEditingController();
+  List<String> filteredCities = [];
   Map<String, dynamic>? weatherData;
   bool isLoading = true;
   String currentCity = 'London';
   List<String> favoriteLocations = ['London'];
   bool useCelsius = true;
   bool showAlerts = true;
+
+  // List of major cities
+  final List<String> cities = [
+    'London', 'New York', 'Paris', 'Tokyo', 'Dubai',
+    'Singapore', 'Hong Kong', 'Sydney', 'Toronto', 'Berlin',
+    'Madrid', 'Rome', 'Moscow', 'Beijing', 'Seoul',
+    'Mumbai', 'Cairo', 'Rio de Janeiro', 'Cape Town', 'Istanbul',
+    'Amsterdam', 'Vienna', 'Stockholm', 'Oslo', 'Copenhagen',
+    'Helsinki', 'Prague', 'Budapest', 'Warsaw', 'Athens',
+    'Barcelona', 'Lisbon', 'Dublin', 'Edinburgh', 'Brussels',
+    'Zurich', 'Geneva', 'Milan', 'Venice', 'Munich',
+    'Hamburg', 'Frankfurt', 'Vancouver', 'Montreal', 'Melbourne',
+    'Auckland', 'Wellington', 'Jakarta', 'Bangkok', 'Manila'
+  ];
+
+  void _filterCities(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        filteredCities = [];
+      } else {
+        filteredCities = cities
+            .where((city) => city.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
 
   IconData _getWeatherIcon(String condition) {
     condition = condition.toLowerCase();
@@ -72,34 +99,76 @@ class _WeatherHomeState extends State<WeatherHome> {
     }
   }
 
-  void _showSearchDialog() async {
-    final result = await showDialog(
+  Future<void> _showSearchDialog() async {
+    String? result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Search City'),
-        content: TextField(
-          controller: _searchController,
-          decoration: const InputDecoration(
-            hintText: 'Enter city name',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Search City'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  hintText: 'Enter city name',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _filterCities(value);
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.3,
+                ),
+                child: filteredCities.isEmpty
+                    ? const Center(
+                        child: Text('No cities found'),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredCities.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            leading: const Icon(Icons.location_city),
+                            title: Text(filteredCities[index]),
+                            onTap: () {
+                              Navigator.pop(context, filteredCities[index]);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
-          onSubmitted: (value) => Navigator.pop(context, value),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (_searchController.text.isNotEmpty) {
+                  Navigator.pop(context, _searchController.text);
+                }
+              },
+              child: const Text('Search'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, _searchController.text),
-            child: const Text('Search'),
-          ),
-        ],
       ),
     );
 
     if (result != null && result.isNotEmpty) {
       setState(() {
         currentCity = result;
+        _searchController.clear();
+        filteredCities = [];
         _loadWeather();
       });
     }
@@ -117,32 +186,15 @@ class _WeatherHomeState extends State<WeatherHome> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          currentCity,
+          'Weather Forecast',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         actions: [
-          Row(
-            children: [
-              Icon(
-                Theme.of(context).brightness == Brightness.light
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
-                size: 20,
-              ),
-              Switch(
-                value: Theme.of(context).brightness == Brightness.dark,
-                onChanged: (bool value) {
-                  widget.onThemeToggle();
-                },
-                activeColor: Theme.of(context).colorScheme.primary,
-                activeTrackColor: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              ),
-            ],
-          ),
           IconButton(
+            iconSize: 32,
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
