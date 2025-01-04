@@ -1,27 +1,35 @@
 import 'package:flutter/material.dart';
-
 import 'Screen/weather_home.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = true;
+
+  void toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF676BD0),
-          brightness: Brightness.light,
-        ),
-      ),
-      home: const WeatherHome(),
+      title: 'Weather App',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: WeatherHome(onThemeToggle: toggleTheme),
     );
   }
 }
