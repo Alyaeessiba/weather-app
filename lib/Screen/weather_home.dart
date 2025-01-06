@@ -41,29 +41,15 @@ class _WeatherHomeState extends State<WeatherHome> {
   String currentCity = 'London';
   List<String> favoriteLocations = ['London'];
 
-  // List of major cities
-  final List<String> cities = [
-    'London', 'New York', 'Paris', 'Tokyo', 'Dubai',
-    'Singapore', 'Hong Kong', 'Sydney', 'Toronto', 'Berlin',
-    'Madrid', 'Rome', 'Moscow', 'Beijing', 'Seoul',
-    'Mumbai', 'Cairo', 'Rio de Janeiro', 'Cape Town', 'Istanbul',
-    'Amsterdam', 'Vienna', 'Stockholm', 'Oslo', 'Copenhagen',
-    'Helsinki', 'Prague', 'Budapest', 'Warsaw', 'Athens',
-    'Barcelona', 'Lisbon', 'Dublin', 'Edinburgh', 'Brussels',
-    'Zurich', 'Geneva', 'Milan', 'Venice', 'Munich',
-    'Hamburg', 'Frankfurt', 'Vancouver', 'Montreal', 'Melbourne',
-    'Auckland', 'Wellington', 'Jakarta', 'Bangkok', 'Manila'
-  ];
+  void _filterCities(String query) async {
+    if (query.isEmpty) {
+      setState(() => filteredCities = []);
+      return;
+    }
 
-  void _filterCities(String query) {
+    final suggestions = await _weatherServices.fetchCitySuggestions(query);
     setState(() {
-      if (query.isEmpty) {
-        filteredCities = [];
-      } else {
-        filteredCities = cities
-            .where((city) => city.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
+      filteredCities = suggestions;
     });
   }
 

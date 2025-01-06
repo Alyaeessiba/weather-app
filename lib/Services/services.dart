@@ -13,27 +13,34 @@ class WeatherServices {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to load  weather data');
+      throw Exception('Failed to load weather data');
     }
   }
 
   Future<Map<String, dynamic>> fetch7DayForecast(String city) async {
     final url = '$forecastBaseUrl?key=$apiKey&q=$city&days=7&aqi=no&alerts=no';
     final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-      return json.decode(response.body);
-      } else {
-      throw Exception('Failed to load forecast data');
-      }
-  }
-
-  Future<List<dynamic>?> fetchCitySuggestions(String query) async {
-    final url = '$searchBaseUrl?key=$apiKey&q=$query';
-    final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      return null;
+      throw Exception('Failed to load forecast data');
     }
+  }
+
+  Future<List<String>> fetchCitySuggestions(String query) async {
+    if (query.length < 2) return [];
+    
+    try {
+      final url = '$searchBaseUrl?key=$apiKey&q=$query';
+      final response = await http.get(Uri.parse(url));
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((city) => city['name'] as String).toList();
+      }
+    } catch (e) {
+      print('Error fetching city suggestions: $e');
+    }
+    return [];
   }
 }
